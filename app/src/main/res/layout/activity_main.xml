@@ -117,7 +117,7 @@
             android:layout_weight="1"
             android:background="@drawable/bg_input"
             android:hint="Type manga title…"
-            android:hintTextColor="@color/textMuted"
+            android:textColorHint="@color/textMuted"
             android:textColor="@color/text"
             android:textSize="13sp"
             android:paddingStart="14dp"
@@ -319,7 +319,6 @@
                         android:layout_height="36dp"
                         android:text="All"
                         android:textSize="11sp"
-                        android:selected="true"
                         android:layout_marginEnd="8dp"/>
 
                     <Button
