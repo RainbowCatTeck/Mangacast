@@ -36,11 +36,21 @@ class JikanApi {
     private val base = "https://api.jikan.moe/v4"
 
     private suspend fun get(url: String): JSONObject = withContext(Dispatchers.IO) {
-        val req = Request.Builder().url(url).build()
-        val resp = client.newCall(req).execute()
-        if (!resp.isSuccessful) throw Exception("API error: ${resp.code}")
-        val body = resp.body?.string() ?: throw Exception("Empty response")
-        JSONObject(body)
+        var lastError = ""
+        repeat(3) { attempt ->
+            val req = Request.Builder().url(url).build()
+            val resp = client.newCall(req).execute()
+            if (resp.code == 429) {
+                // Rate limited — wait then retry
+                lastError = "rate_limited"
+                Thread.sleep(1200L * (attempt + 1))
+                return@repeat
+            }
+            if (!resp.isSuccessful) throw Exception("API error: ${resp.code}")
+            val body = resp.body?.string() ?: throw Exception("Empty response")
+            return@withContext JSONObject(body)
+        }
+        throw Exception(if (lastError == "rate_limited") "rate_limited" else "Request failed")
     }
 
     suspend fun searchManga(query: String): MangaResult {

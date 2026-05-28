@@ -141,15 +141,27 @@ class MainActivity : AppCompatActivity() {
                 Uri.parse("https://myanimelist.net/character/${entry.malId}")))
         }
 
-        // Fetch description on demand
-        lifecycleScope.launch {
-            try {
-                val about = api.fetchCharacterAbout(entry.malId)
-                descView.text = about.ifBlank { "No description added on MAL for this character yet." }
-            } catch (e: Exception) {
-                descView.text = "Could not load description."
+        val retryBtn = view.findViewById<TextView>(R.id.sheetRetryBtn)
+
+        fun loadDesc() {
+            descView.text = "Loading…"
+            retryBtn.visibility = View.GONE
+            lifecycleScope.launch {
+                try {
+                    val about = api.fetchCharacterAbout(entry.malId)
+                    descView.text = about.ifBlank { "No description added on MAL for this character yet." }
+                } catch (e: Exception) {
+                    val msg = if (e.message == "rate_limited")
+                        "Too many requests — tap Retry in a moment."
+                    else "Could not load description."
+                    descView.text = msg
+                    retryBtn.visibility = View.VISIBLE
+                }
             }
         }
+
+        retryBtn.setOnClickListener { loadDesc() }
+        loadDesc()
 
         sheet.show()
     }

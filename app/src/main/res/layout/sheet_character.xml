@@ -85,7 +85,20 @@
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:paddingTop="16dp"
-        android:paddingBottom="16dp"/>
+        android:paddingBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/sheetRetryBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="↺ Retry"
+        android:textSize="11sp"
+        android:textColor="@color/accent"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="16dp"
+        android:background="?attr/selectableItemBackground"
+        android:visibility="gone"/>
 
     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/border"/>
 
