@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val about = api.fetchCharacterAbout(entry.malId)
-                descView.text = about.ifBlank { "No description available on MAL." }
+                descView.text = about.ifBlank { "No description added on MAL for this character yet." }
             } catch (e: Exception) {
                 descView.text = "Could not load description."
             }

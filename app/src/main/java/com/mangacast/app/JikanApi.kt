@@ -93,9 +93,11 @@ class JikanApi {
     suspend fun fetchCharacterAbout(malId: Int): String {
         val json = get("$base/characters/$malId")
         val data = json.optJSONObject("data") ?: return ""
-        val about = data.optString("about", "")
-        // Return first non-blank paragraph, strip MAL attribution footnotes
-        return about
+        // optString returns the literal string "null" when the JSON value is null — treat that as empty
+        val raw = data.optString("about", "").takeIf { it != "null" } ?: ""
+        if (raw.isBlank()) return ""
+        // Return first few non-blank paragraphs, strip MAL attribution footnotes
+        return raw
             .replace(Regex("\\[Written by MAL Rewrite\\]", RegexOption.IGNORE_CASE), "")
             .split("\n")
             .map { it.trim() }
