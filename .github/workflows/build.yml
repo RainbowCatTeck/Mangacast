@@ -56,7 +56,7 @@ jobs:
           git -c user.email="actions@github.com" -c user.name="GitHub Actions" \
             push origin :refs/tags/latest-apk 2>/dev/null || true
           gh release create latest-apk \
-            app/build/outputs/apk/debug/app-debug.apk \
+            app/build/outputs/apk/debug/app-debug.apk#MangaCast.apk \
             --title "MangaCast APK" \
             --notes "Built from commit ${{ github.sha }}"
         env:
