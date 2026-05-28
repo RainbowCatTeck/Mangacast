@@ -342,6 +342,36 @@
 
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/border"/>
 
+            <LinearLayout
+                android:id="@+id/descLoadingBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:background="@color/surface2"
+                android:visibility="gone">
+
+                <ProgressBar
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:indeterminateTint="@color/textDim"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/descLoadingText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="10sp"
+                    android:textColor="@color/textDim"
+                    android:letterSpacing="0.05"
+                    android:text="Loading descriptions…"/>
+            </LinearLayout>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/charRecycler"
                 android:layout_width="match_parent"

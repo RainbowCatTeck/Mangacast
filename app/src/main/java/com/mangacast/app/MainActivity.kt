@@ -212,12 +212,28 @@ class MainActivity : AppCompatActivity() {
                     showState(State.RESULTS)
                 }
                 // Prefetch all descriptions in the background (400ms apart to respect rate limit)
-                chars.filter { it.malId > 0 }.forEach { char ->
-                    if (!characterAbouts.containsKey(char.malId)) {
-                        try {
-                            val about = api.fetchCharacterAbout(char.malId)
-                            characterAbouts[char.malId] = about
-                        } catch (_: Exception) { /* will retry when sheet is opened */ }
+                val toFetch = chars.filter { it.malId > 0 }
+                val total = toFetch.size
+                if (total > 0) {
+                    runOnUiThread {
+                        binding.descLoadingBar.visibility = View.VISIBLE
+                        binding.descLoadingText.text = "Loading descriptions… 0 / $total"
+                    }
+                    toFetch.forEachIndexed { index, char ->
+                        if (!characterAbouts.containsKey(char.malId)) {
+                            try {
+                                val about = api.fetchCharacterAbout(char.malId)
+                                characterAbouts[char.malId] = about
+                            } catch (_: Exception) { /* will retry when sheet is opened */ }
+                        }
+                        val done = index + 1
+                        runOnUiThread {
+                            if (done < total) {
+                                binding.descLoadingText.text = "Loading descriptions… $done / $total"
+                            } else {
+                                binding.descLoadingBar.visibility = View.GONE
+                            }
+                        }
                         delay(400)
                     }
                 }
