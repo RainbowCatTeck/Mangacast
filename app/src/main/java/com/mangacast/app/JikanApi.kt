@@ -1,6 +1,7 @@
 package com.mangacast.app
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -41,9 +42,8 @@ class JikanApi {
             val req = Request.Builder().url(url).build()
             val resp = client.newCall(req).execute()
             if (resp.code == 429) {
-                // Rate limited — wait then retry
                 lastError = "rate_limited"
-                Thread.sleep(1200L * (attempt + 1))
+                delay(1200L * (attempt + 1))
                 return@repeat
             }
             if (!resp.isSuccessful) throw Exception("API error: ${resp.code}")

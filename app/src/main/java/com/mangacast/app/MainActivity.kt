@@ -3,6 +3,7 @@ package com.mangacast.app
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import kotlinx.coroutines.delay
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -23,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: CharacterAdapter
     private val api = JikanApi()
+    private val characterAbouts = mutableMapOf<Int, String>() // malId → cached description
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,11 +146,18 @@ class MainActivity : AppCompatActivity() {
         val retryBtn = view.findViewById<TextView>(R.id.sheetRetryBtn)
 
         fun loadDesc() {
+            val cached = characterAbouts[entry.malId]
+            if (cached != null) {
+                descView.text = cached.ifBlank { "No description added on MAL for this character yet." }
+                retryBtn.visibility = View.GONE
+                return
+            }
             descView.text = "Loading…"
             retryBtn.visibility = View.GONE
             lifecycleScope.launch {
                 try {
                     val about = api.fetchCharacterAbout(entry.malId)
+                    characterAbouts[entry.malId] = about
                     descView.text = about.ifBlank { "No description added on MAL for this character yet." }
                 } catch (e: Exception) {
                     val msg = if (e.message == "rate_limited")
@@ -196,10 +205,21 @@ class MainActivity : AppCompatActivity() {
                 val chars = api.fetchCharacters(manga.malId)
 
                 runOnUiThread {
+                    characterAbouts.clear()
                     renderManga(manga)
                     adapter.setCharacters(chars)
                     updateCounts(chars)
                     showState(State.RESULTS)
+                }
+                // Prefetch all descriptions in the background (400ms apart to respect rate limit)
+                chars.filter { it.malId > 0 }.forEach { char ->
+                    if (!characterAbouts.containsKey(char.malId)) {
+                        try {
+                            val about = api.fetchCharacterAbout(char.malId)
+                            characterAbouts[char.malId] = about
+                        } catch (_: Exception) { /* will retry when sheet is opened */ }
+                        delay(400)
+                    }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
