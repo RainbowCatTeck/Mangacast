@@ -38,8 +38,7 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent) {
         if (intent.action != Intent.ACTION_SEND) return
 
-        // For image shares (reader), title is in EXTRA_SUBJECT or EXTRA_TITLE
-        // For text shares (info page), title is in EXTRA_TEXT or EXTRA_SUBJECT
+        // Collect text from all possible sources TachiyomiSY might use
         val raw = when {
             intent.type?.startsWith("image/") == true ->
                 intent.getStringExtra(Intent.EXTRA_SUBJECT)
@@ -48,6 +47,7 @@ class MainActivity : AppCompatActivity() {
             intent.type == "text/plain" ->
                 intent.getStringExtra(Intent.EXTRA_TEXT)
                     ?: intent.getStringExtra(Intent.EXTRA_SUBJECT)
+                    ?: intent.clipData?.getItemAt(0)?.text?.toString()
             else -> null
         } ?: return
 
@@ -60,11 +60,17 @@ class MainActivity : AppCompatActivity() {
             .replace(Regex("^read\\s+", RegexOption.IGNORE_CASE), "")
             .trim()
 
+        binding.sharedPill.visibility = View.VISIBLE
+
         if (cleaned.isNotBlank()) {
+            // Clean title extracted — auto-search
             binding.searchInput.setText(cleaned)
-            binding.sharedPill.visibility = View.VISIBLE
             binding.sharedTitle.text = cleaned
             lookupManga(cleaned)
+        } else {
+            // Couldn't extract a clean title — show raw text so you can edit and tap GO
+            binding.searchInput.setText(raw)
+            binding.sharedTitle.text = raw
         }
     }
 
