@@ -1,5 +1,7 @@
 package com.mangacast.app
 
+import android.content.Intent
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -71,6 +73,14 @@ class CharacterAdapter : RecyclerView.Adapter<CharacterAdapter.VH>() {
                 roleBadge.setBackgroundResource(R.drawable.badge_supporting)
                 roleBadge.setTextColor(ctx.getColor(R.color.blue))
                 roleBar.setBackgroundColor(ctx.getColor(R.color.blue))
+            }
+
+            // Tap to open MAL character page
+            itemView.setOnClickListener {
+                if (entry.malId > 0) {
+                    val uri = Uri.parse("https://myanimelist.net/character/${entry.malId}")
+                    itemView.context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                }
             }
 
             if (entry.imageUrl.isNotBlank()) {

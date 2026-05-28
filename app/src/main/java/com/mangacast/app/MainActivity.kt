@@ -50,8 +50,10 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Strip chapter info, app suffixes, URLs, and leading "Read"
-        val cleaned = raw
+        // Strip "Title: Chapter X, Page Y" (image share format)
+        // Strip "Title - TachiyomiSY", chapter suffixes, and leading "Read"
+        var cleaned = raw
+            .replace(Regex("\\s*:\\s*[Cc]hapter.*", RegexOption.IGNORE_CASE), "")
             .replace(Regex("\\s*[-–]\\s*TachiyomiSY.*", RegexOption.IGNORE_CASE), "")
             .replace(Regex("\\s*[-–]\\s*[Cc]h(apter|\\.)?\\s*[\\d.]+.*"), "")
             .replace(Regex("\\s*[Cc]hapter\\s*[\\d.]+.*"), "")
@@ -59,18 +61,35 @@ class MainActivity : AppCompatActivity() {
             .replace(Regex("^read\\s+", RegexOption.IGNORE_CASE), "")
             .trim()
 
+        // If result is blank (e.g. raw was a URL), try extracting title from URL path
+        if (cleaned.isBlank() && raw.startsWith("http")) {
+            cleaned = extractTitleFromUrl(raw) ?: ""
+        }
+
         binding.sharedPill.visibility = View.VISIBLE
 
         if (cleaned.isNotBlank()) {
-            // Clean title extracted — auto-search
             binding.searchInput.setText(cleaned)
             binding.sharedTitle.text = cleaned
             lookupManga(cleaned)
         } else {
-            // Couldn't extract a clean title — show raw text so you can edit and tap GO
+            // Still nothing — show raw so you can edit and tap GO manually
             binding.searchInput.setText(raw)
             binding.sharedTitle.text = raw
         }
+    }
+
+    private fun extractTitleFromUrl(url: String): String? {
+        return try {
+            val path = java.net.URL(url).path.trimEnd('/')
+            val segments = path.split("/").filter { it.isNotBlank() }
+            // Skip UUID segments (e.g. MangaDex: /title/{uuid}/{slug})
+            val titleSegment = segments.lastOrNull {
+                it.length > 2 &&
+                !it.matches(Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"))
+            }
+            titleSegment?.replace(Regex("[-_]"), " ")?.trim()
+        } catch (e: Exception) { null }
     }
 
     private fun setupRecyclerView() {

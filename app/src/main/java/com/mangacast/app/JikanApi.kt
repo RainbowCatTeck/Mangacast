@@ -19,6 +19,7 @@ data class MangaResult(
 )
 
 data class CharacterEntry(
+    val malId: Int,
     val name: String,
     val nameKanji: String,
     val imageUrl: String,
@@ -78,6 +79,7 @@ class JikanApi {
             val img = images?.optString("image_url") ?: ""
 
             list.add(CharacterEntry(
+                malId = char.optInt("mal_id", 0),
                 name = char.optString("name", ""),
                 nameKanji = char.optString("name_kanji", ""),
                 imageUrl = img,
