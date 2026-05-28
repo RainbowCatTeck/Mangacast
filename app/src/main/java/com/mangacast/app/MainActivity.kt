@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -38,18 +39,16 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent) {
         if (intent.action != Intent.ACTION_SEND) return
 
-        // Collect text from all possible sources TachiyomiSY might use
-        val raw = when {
-            intent.type?.startsWith("image/") == true ->
-                intent.getStringExtra(Intent.EXTRA_SUBJECT)
-                    ?: intent.getStringExtra(Intent.EXTRA_TITLE)
-                    ?: intent.getStringExtra(Intent.EXTRA_TEXT)
-            intent.type == "text/plain" ->
-                intent.getStringExtra(Intent.EXTRA_TEXT)
-                    ?: intent.getStringExtra(Intent.EXTRA_SUBJECT)
-                    ?: intent.clipData?.getItemAt(0)?.text?.toString()
-            else -> null
-        } ?: return
+        // Try every possible text location regardless of mime type
+        val raw = intent.getStringExtra(Intent.EXTRA_TEXT)
+            ?: intent.getStringExtra(Intent.EXTRA_SUBJECT)
+            ?: intent.getStringExtra(Intent.EXTRA_TITLE)
+            ?: intent.clipData?.getItemAt(0)?.text?.toString()
+
+        if (raw == null) {
+            Toast.makeText(this, "Share received but no title text found", Toast.LENGTH_LONG).show()
+            return
+        }
 
         // Strip chapter info, app suffixes, URLs, and leading "Read"
         val cleaned = raw
