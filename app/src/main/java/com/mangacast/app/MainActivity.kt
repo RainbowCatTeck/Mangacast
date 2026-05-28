@@ -36,24 +36,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        if (intent.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-            val shared = intent.getStringExtra(Intent.EXTRA_TEXT)
-                ?: intent.getStringExtra(Intent.EXTRA_SUBJECT)
-                ?: return
+        if (intent.action != Intent.ACTION_SEND) return
 
-            // Clean up: TachiyomiSY may share "Title - TachiyomiSY", a URL, or "Read Title"
-            val cleaned = shared
-                .replace(Regex("\\s*[-–]\\s*TachiyomiSY.*", RegexOption.IGNORE_CASE), "")
-                .replace(Regex("https?://\\S+"), "")
-                .replace(Regex("^read\\s+", RegexOption.IGNORE_CASE), "")
-                .trim()
+        // For image shares (reader), title is in EXTRA_SUBJECT or EXTRA_TITLE
+        // For text shares (info page), title is in EXTRA_TEXT or EXTRA_SUBJECT
+        val raw = when {
+            intent.type?.startsWith("image/") == true ->
+                intent.getStringExtra(Intent.EXTRA_SUBJECT)
+                    ?: intent.getStringExtra(Intent.EXTRA_TITLE)
+                    ?: intent.getStringExtra(Intent.EXTRA_TEXT)
+            intent.type == "text/plain" ->
+                intent.getStringExtra(Intent.EXTRA_TEXT)
+                    ?: intent.getStringExtra(Intent.EXTRA_SUBJECT)
+            else -> null
+        } ?: return
 
-            if (cleaned.isNotBlank()) {
-                binding.searchInput.setText(cleaned)
-                binding.sharedPill.visibility = View.VISIBLE
-                binding.sharedTitle.text = cleaned
-                lookupManga(cleaned)
-            }
+        // Strip chapter info, app suffixes, URLs, and leading "Read"
+        val cleaned = raw
+            .replace(Regex("\\s*[-–]\\s*TachiyomiSY.*", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s*[-–]\\s*[Cc]h(apter|\\.)?\\s*[\\d.]+.*"), "")
+            .replace(Regex("\\s*[Cc]hapter\\s*[\\d.]+.*"), "")
+            .replace(Regex("https?://\\S+"), "")
+            .replace(Regex("^read\\s+", RegexOption.IGNORE_CASE), "")
+            .trim()
+
+        if (cleaned.isNotBlank()) {
+            binding.searchInput.setText(cleaned)
+            binding.sharedPill.visibility = View.VISIBLE
+            binding.sharedTitle.text = cleaned
+            lookupManga(cleaned)
         }
     }
 
