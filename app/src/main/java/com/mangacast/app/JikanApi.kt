@@ -90,5 +90,20 @@ class JikanApi {
         return list.sortedWith(compareBy { if (it.role == "Main") 0 else 1 })
     }
 
+    suspend fun fetchCharacterAbout(malId: Int): String {
+        val json = get("$base/characters/$malId")
+        val data = json.optJSONObject("data") ?: return ""
+        val about = data.optString("about", "")
+        // Return first non-blank paragraph, strip MAL attribution footnotes
+        return about
+            .replace(Regex("\\[Written by MAL Rewrite\\]", RegexOption.IGNORE_CASE), "")
+            .split("\n")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .take(3)
+            .joinToString("\n\n")
+            .trim()
+    }
+
     private fun encode(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
 }

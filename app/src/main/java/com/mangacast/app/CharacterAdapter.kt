@@ -1,7 +1,5 @@
 package com.mangacast.app
 
-import android.content.Intent
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
 
-class CharacterAdapter : RecyclerView.Adapter<CharacterAdapter.VH>() {
+class CharacterAdapter(
+    private val onCharacterClick: (CharacterEntry) -> Unit
+) : RecyclerView.Adapter<CharacterAdapter.VH>() {
 
     private var allChars: List<CharacterEntry> = emptyList()
     private var displayed: List<CharacterEntry> = emptyList()
@@ -40,7 +40,7 @@ class CharacterAdapter : RecyclerView.Adapter<CharacterAdapter.VH>() {
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        holder.bind(displayed[position])
+        holder.bind(displayed[position], onCharacterClick)
     }
 
     override fun getItemCount() = displayed.size
@@ -52,7 +52,8 @@ class CharacterAdapter : RecyclerView.Adapter<CharacterAdapter.VH>() {
         private val roleBadge: TextView = v.findViewById(R.id.charRole)
         private val roleBar: View = v.findViewById(R.id.roleBar)
 
-        fun bind(entry: CharacterEntry) {
+        fun bind(entry: CharacterEntry, onClick: (CharacterEntry) -> Unit) {
+            itemView.setOnClickListener { onClick(entry) }
             nameEn.text = entry.name
 
             if (entry.nameKanji.isNotBlank()) {
@@ -73,14 +74,6 @@ class CharacterAdapter : RecyclerView.Adapter<CharacterAdapter.VH>() {
                 roleBadge.setBackgroundResource(R.drawable.badge_supporting)
                 roleBadge.setTextColor(ctx.getColor(R.color.blue))
                 roleBar.setBackgroundColor(ctx.getColor(R.color.blue))
-            }
-
-            // Tap to open MAL character page
-            itemView.setOnClickListener {
-                if (entry.malId > 0) {
-                    val uri = Uri.parse("https://myanimelist.net/character/${entry.malId}")
-                    itemView.context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                }
             }
 
             if (entry.imageUrl.isNotBlank()) {

@@ -1,16 +1,20 @@
 package com.mangacast.app
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
+import coil.transform.CircleCropTransformation
 import coil.transform.RoundedCornersTransformation
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mangacast.app.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
@@ -93,10 +97,61 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        adapter = CharacterAdapter()
+        adapter = CharacterAdapter { entry -> showCharacterSheet(entry) }
         binding.charRecycler.layoutManager = LinearLayoutManager(this)
         binding.charRecycler.adapter = adapter
         binding.charRecycler.itemAnimator = null
+    }
+
+    private fun showCharacterSheet(entry: CharacterEntry) {
+        val sheet = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.sheet_character, null)
+        sheet.setContentView(view)
+
+        val nameView   = view.findViewById<TextView>(R.id.sheetName)
+        val nameJpView = view.findViewById<TextView>(R.id.sheetNameJp)
+        val roleView   = view.findViewById<TextView>(R.id.sheetRole)
+        val descView   = view.findViewById<TextView>(R.id.sheetDesc)
+        val avatarView = view.findViewById<android.widget.ImageView>(R.id.sheetAvatar)
+        val malBtn     = view.findViewById<TextView>(R.id.sheetMalBtn)
+
+        nameView.text = entry.name
+        nameJpView.text = entry.nameKanji
+        nameJpView.visibility = if (entry.nameKanji.isNotBlank()) View.VISIBLE else View.GONE
+
+        roleView.text = entry.role
+        if (entry.role == "Main") {
+            roleView.setBackgroundResource(R.drawable.badge_main)
+            roleView.setTextColor(getColor(R.color.accent))
+        } else {
+            roleView.setBackgroundResource(R.drawable.badge_supporting)
+            roleView.setTextColor(getColor(R.color.blue))
+        }
+
+        if (entry.imageUrl.isNotBlank()) {
+            avatarView.load(entry.imageUrl) {
+                transformations(CircleCropTransformation())
+                crossfade(true)
+                placeholder(R.drawable.ic_avatar_placeholder)
+            }
+        }
+
+        malBtn.setOnClickListener {
+            startActivity(Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://myanimelist.net/character/${entry.malId}")))
+        }
+
+        // Fetch description on demand
+        lifecycleScope.launch {
+            try {
+                val about = api.fetchCharacterAbout(entry.malId)
+                descView.text = about.ifBlank { "No description available on MAL." }
+            } catch (e: Exception) {
+                descView.text = "Could not load description."
+            }
+        }
+
+        sheet.show()
     }
 
     private fun setupSearch() {
